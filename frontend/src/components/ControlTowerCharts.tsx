@@ -43,7 +43,7 @@ function DataBadge() {
 }
 
 function ChartPanel({ title, subtitle, className = "", children }: { title: string; subtitle: string; className?: string; children: React.ReactNode }) {
-  return <article className={`panel chart-panel ${className}`}>
+  return <article className={`panel chart-panel ${className}`} data-reveal>
     <header className="chart-heading"><div><h2>{title}</h2><p>{subtitle}</p></div><DataBadge /></header>
     {children}
   </article>;
@@ -81,8 +81,8 @@ function GroupedBars({ data }: { data: MonthlyPoint[] }) {
       const center = left + groupWidth * (index + .5);
       const billedHeight = item.billed / max * plotHeight, collectedHeight = item.collected / max * plotHeight;
       return <g key={item.month}>
-        <rect x={center - barWidth - 2} y={top + plotHeight - billedHeight} width={barWidth} height={billedHeight} rx="3" fill="#2867d8"><title>{monthLabel(item.month)} · Facturado: S/ {integer.format(item.billed)}</title></rect>
-        <rect x={center + 2} y={top + plotHeight - collectedHeight} width={barWidth} height={collectedHeight} rx="3" fill="#16a5e9"><title>{monthLabel(item.month)} · Cobrado: S/ {integer.format(item.collected)}</title></rect>
+        <rect className="chart-bar" style={{ animationDelay: `${180 + index * 65}ms` }} x={center - barWidth - 2} y={top + plotHeight - billedHeight} width={barWidth} height={billedHeight} rx="3" fill="#2867d8"><title>{monthLabel(item.month)} · Facturado: S/ {integer.format(item.billed)}</title></rect>
+        <rect className="chart-bar" style={{ animationDelay: `${230 + index * 65}ms` }} x={center + 2} y={top + plotHeight - collectedHeight} width={barWidth} height={collectedHeight} rx="3" fill="#16a5e9"><title>{monthLabel(item.month)} · Cobrado: S/ {integer.format(item.collected)}</title></rect>
         <text x={center} y={height - 17} textAnchor="middle" className="chart-axis-label">{monthLabel(item.month)}</text>
       </g>;
     })}
@@ -114,9 +114,9 @@ function AreaChart({ data }: { data: AmountPoint[] }) {
   return <div className="chart-canvas"><svg viewBox={`0 0 ${width} ${height}`} role="img" aria-label="Gráfico de evolución de cartera">
     <defs><linearGradient id="portfolio-fill" x1="0" y1="0" x2="0" y2="1"><stop offset="0%" stopColor="#f2a51a" stopOpacity=".32" /><stop offset="100%" stopColor="#f2a51a" stopOpacity=".04" /></linearGradient></defs>
     {yTicks(max).map((tick, index) => { const y = top + index * plotHeight / 4; return <g key={index}><line x1={left} x2={width - right} y1={y} y2={y} className="chart-grid-line" /><text x={left - 8} y={y + 4} textAnchor="end" className="chart-axis-label">{compact.format(tick)}</text></g>; })}
-    {area && <polygon points={area} fill="url(#portfolio-fill)" />}
-    {line && <polyline points={line} fill="none" stroke="#f2a51a" strokeWidth="2.5" strokeLinejoin="round" />}
-    {points.map((point) => <g key={point.month}><circle cx={point.x} cy={point.y} r="3" fill="#fff" stroke="#f2a51a" strokeWidth="2"><title>{monthLabel(point.month ?? "")} · S/ {integer.format(point.amount)}</title></circle><text x={point.x} y={height - 14} textAnchor="middle" className="chart-axis-label">{monthLabel(point.month ?? "")}</text></g>)}
+    {area && <polygon className="chart-area" points={area} fill="url(#portfolio-fill)" />}
+    {line && <polyline className="chart-line" points={line} fill="none" stroke="#f2a51a" strokeWidth="2.5" strokeLinejoin="round" />}
+    {points.map((point, index) => <g key={point.month}><circle className="chart-point" style={{ animationDelay: `${520 + index * 55}ms` }} cx={point.x} cy={point.y} r="3" fill="#fff" stroke="#f2a51a" strokeWidth="2"><title>{monthLabel(point.month ?? "")} · S/ {integer.format(point.amount)}</title></circle><text x={point.x} y={height - 14} textAnchor="middle" className="chart-axis-label">{monthLabel(point.month ?? "")}</text></g>)}
   </svg></div>;
 }
 
@@ -127,7 +127,7 @@ function AgingBars({ data }: { data: AmountPoint[] }) {
   const slot = plotWidth / Math.max(data.length, 1), barWidth = Math.min(62, slot * .68);
   return <div className="chart-canvas"><svg viewBox={`0 0 ${width} ${height}`} role="img" aria-label="Gráfico de antigüedad de cartera">
     {yTicks(max).map((tick, index) => { const y = top + index * plotHeight / 4; return <g key={index}><line x1={left} x2={width - right} y1={y} y2={y} className="chart-grid-line" /><text x={left - 8} y={y + 4} textAnchor="end" className="chart-axis-label">{compact.format(tick)}</text></g>; })}
-    {data.map((item, index) => { const barHeight = item.amount / max * plotHeight, x = left + slot * index + (slot - barWidth) / 2; return <g key={item.key}><rect x={x} y={top + plotHeight - barHeight} width={barWidth} height={barHeight} rx="4" fill={index === data.length - 1 ? "#d9273e" : "#e6485c"}><title>{item.label} días · S/ {integer.format(item.amount)}</title></rect><text x={x + barWidth / 2} y={height - 14} textAnchor="middle" className="chart-axis-label">{item.label}</text></g>; })}
+    {data.map((item, index) => { const barHeight = item.amount / max * plotHeight, x = left + slot * index + (slot - barWidth) / 2; return <g key={item.key}><rect className="chart-bar" style={{ animationDelay: `${220 + index * 90}ms` }} x={x} y={top + plotHeight - barHeight} width={barWidth} height={barHeight} rx="4" fill={index === data.length - 1 ? "#d9273e" : "#e6485c"}><title>{item.label} días · S/ {integer.format(item.amount)}</title></rect><text x={x + barWidth / 2} y={height - 14} textAnchor="middle" className="chart-axis-label">{item.label}</text></g>; })}
   </svg></div>;
 }
 
@@ -138,7 +138,7 @@ function AgentLine({ data }: { data: AgentPoint[] }) {
   const points = data.map((item, index) => ({ ...item, x: left + index * plotWidth / Math.max(data.length - 1, 1), y: top + plotHeight - item.cases / max * plotHeight }));
   return <div className="chart-canvas"><svg viewBox={`0 0 ${width} ${height}`} role="img" aria-label="Gráfico de consultas por agente">
     {yTicks(max).map((tick, index) => { const y = top + index * plotHeight / 4; return <g key={index}><line x1={left} x2={width - right} y1={y} y2={y} className="chart-grid-line" /><text x={left - 8} y={y + 4} textAnchor="end" className="chart-axis-label">{integer.format(tick)}</text></g>; })}
-    <polyline points={points.map((point) => `${point.x},${point.y}`).join(" ")} fill="none" stroke="#2867d8" strokeWidth="2.5" strokeLinejoin="round" />
-    {points.map((point) => <g key={point.agent}><circle cx={point.x} cy={point.y} r="4" fill="#fff" stroke="#2867d8" strokeWidth="2.5"><title>{point.agent} · {integer.format(point.cases)} consultas</title></circle><text x={point.x} y={height - 14} textAnchor="middle" className="chart-axis-label chart-agent-label">{point.agent}</text></g>)}
+    <polyline className="chart-line" points={points.map((point) => `${point.x},${point.y}`).join(" ")} fill="none" stroke="#2867d8" strokeWidth="2.5" strokeLinejoin="round" />
+    {points.map((point, index) => <g key={point.agent}><circle className="chart-point" style={{ animationDelay: `${480 + index * 80}ms` }} cx={point.x} cy={point.y} r="4" fill="#fff" stroke="#2867d8" strokeWidth="2.5"><title>{point.agent} · {integer.format(point.cases)} consultas</title></circle><text x={point.x} y={height - 14} textAnchor="middle" className="chart-axis-label chart-agent-label">{point.agent}</text></g>)}
   </svg></div>;
 }
