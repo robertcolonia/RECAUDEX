@@ -1,0 +1,327 @@
+generator client {
+  provider     = "prisma-client"
+  output       = "../src/generated/prisma"
+  moduleFormat = "esm"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+model Organization {
+  id                  String               @id @default(cuid())
+  name                String
+  slug                String               @unique
+  taxId               String?              @unique
+  createdAt           DateTime             @default(now())
+  updatedAt           DateTime             @updatedAt
+  users               User[]
+  customers           Customer[]
+  bankAccounts        BankAccount[]
+  serviceAssets       ServiceAsset[]
+  invoices            Invoice[]
+  creditNotes         CreditNote[]
+  payments            Payment[]
+  paymentIntents      PaymentIntent[]
+  reconciliationCases ReconciliationCase[]
+  approvals           Approval[]
+  settlements         Settlement[]
+  conversations       Conversation[]
+  auditEvents         AuditEvent[]
+}
+
+model User {
+  id             String         @id @default(cuid())
+  organizationId String
+  organization   Organization   @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  email          String         @unique
+  passwordHash   String
+  fullName       String
+  role           String
+  jobTitle       String?
+  phone          String?
+  avatarData     Bytes?
+  avatarMimeType String?
+  avatarUpdatedAt DateTime?
+  active         Boolean        @default(true)
+  createdAt      DateTime       @default(now())
+  updatedAt      DateTime       @updatedAt
+  lastLoginAt    DateTime?
+  conversations  Conversation[]
+  requested      Approval[]     @relation("ApprovalRequester")
+  decided        Approval[]     @relation("ApprovalDecider")
+  auditEvents    AuditEvent[]
+
+  @@index([organizationId])
+}
+
+model Customer {
+  id             String       @id @default(cuid())
+  organizationId String
+  organization   Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  taxId          String
+  legalName      String
+  segment        String?
+  status         String?
+  department     String?
+  province       String?
+  district       String?
+  createdAt      DateTime     @default(now())
+  updatedAt      DateTime     @updatedAt
+  invoices       Invoice[]
+  payments       Payment[]
+  paymentIntents PaymentIntent[]
+  serviceAssets  ServiceAsset[]
+  creditNotes    CreditNote[]
+
+  @@unique([organizationId, taxId])
+  @@index([organizationId, legalName])
+}
+
+model BankAccount {
+  id                     String       @id @default(cuid())
+  organizationId         String
+  organization           Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  bankName                String
+  accountAlias            String
+  accountHolder           String
+  accountType             String
+  currency                String       @default("PEN")
+  accountNumberEncrypted  String
+  accountNumberLast4      String
+  accountFingerprint      String
+  active                  Boolean      @default(true)
+  createdAt               DateTime     @default(now())
+  updatedAt               DateTime     @updatedAt
+
+  @@unique([organizationId, accountFingerprint])
+  @@index([organizationId, active, bankName])
+}
+
+model ServiceAsset {
+  id             String       @id @default(cuid())
+  organizationId String
+  organization   Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  customerId     String
+  customer       Customer     @relation(fields: [customerId], references: [id], onDelete: Cascade)
+  customerCode   String?
+  accountCode    String?
+  serviceType    String
+  status         String?
+  attributes     Json
+  createdAt      DateTime     @default(now())
+
+  @@index([organizationId, customerId, serviceType])
+  @@index([organizationId, accountCode])
+}
+
+model Invoice {
+  id             String       @id @default(cuid())
+  organizationId String
+  organization   Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  customerId     String
+  customer       Customer     @relation(fields: [customerId], references: [id], onDelete: Restrict)
+  externalId     String
+  customerCode   String?
+  accountCode    String?
+  source         String?
+  system         String?
+  issuedAt       DateTime
+  dueAt          DateTime?
+  currency       String       @default("PEN")
+  netAmount      Decimal      @db.Decimal(14, 2)
+  taxAmount      Decimal      @db.Decimal(14, 2)
+  totalAmount    Decimal      @db.Decimal(14, 2)
+  openAmount     Decimal      @db.Decimal(14, 2)
+  status         String       @default("OPEN")
+  createdAt      DateTime     @default(now())
+  settlementItems SettlementItem[]
+
+  @@unique([organizationId, externalId])
+  @@index([organizationId, customerId, status])
+  @@index([organizationId, totalAmount])
+}
+
+model CreditNote {
+  id             String       @id @default(cuid())
+  organizationId String
+  organization   Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  customerId     String
+  customer       Customer     @relation(fields: [customerId], references: [id], onDelete: Restrict)
+  externalId     String
+  affectedInvoice String?
+  customerCode   String?
+  accountCode    String?
+  issuedAt       DateTime
+  currency       String       @default("PEN")
+  amount         Decimal      @db.Decimal(14, 2)
+  createdAt      DateTime     @default(now())
+
+  @@unique([organizationId, externalId])
+  @@index([organizationId, customerId])
+  @@index([organizationId, affectedInvoice])
+}
+
+model Payment {
+  id               String               @id @default(cuid())
+  organizationId   String
+  organization     Organization         @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  customerId       String?
+  customer         Customer?            @relation(fields: [customerId], references: [id], onDelete: SetNull)
+  externalId       String
+  bankOperation    String?
+  declaredInvoice String?
+  customerCode     String?
+  accountCode      String?
+  system           String?
+  paidAt           DateTime
+  currency         String               @default("PEN")
+  amount           Decimal              @db.Decimal(14, 2)
+  status           String               @default("UNMATCHED")
+  createdAt        DateTime             @default(now())
+  cases            ReconciliationCase[]
+  settlements      Settlement[]
+
+  @@unique([organizationId, externalId])
+  @@index([organizationId, status])
+  @@index([organizationId, amount])
+}
+
+model PaymentIntent {
+  id             String       @id @default(cuid())
+  organizationId String
+  organization   Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  customerId     String
+  customer       Customer     @relation(fields: [customerId], references: [id], onDelete: Restrict)
+  reference      String
+  invoiceIds     Json
+  expectedAmount Decimal      @db.Decimal(14, 2)
+  expectedAt     DateTime?
+  status         String       @default("OPEN")
+  createdAt      DateTime     @default(now())
+
+  @@unique([organizationId, reference])
+  @@index([organizationId, customerId, status])
+}
+
+model ReconciliationCase {
+  id             String       @id @default(cuid())
+  organizationId String
+  organization   Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  paymentId      String
+  payment        Payment      @relation(fields: [paymentId], references: [id], onDelete: Cascade)
+  status         String       @default("PENDING")
+  confidence     Float
+  candidates     Json
+  rationale      String
+  policyDecision String       @default("PENDING")
+  policyChecks   Json?
+  policyEvaluatedAt DateTime?
+  createdAt      DateTime     @default(now())
+  updatedAt      DateTime     @updatedAt
+  approval       Approval?
+  settlement     Settlement?
+
+  @@unique([organizationId, paymentId])
+  @@index([organizationId, status, confidence])
+}
+
+model Approval {
+  id             String             @id @default(cuid())
+  organizationId String
+  organization   Organization       @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  caseId         String             @unique
+  case           ReconciliationCase @relation(fields: [caseId], references: [id], onDelete: Cascade)
+  requestedById  String
+  requestedBy    User               @relation("ApprovalRequester", fields: [requestedById], references: [id], onDelete: Restrict)
+  decidedById    String?
+  decidedBy      User?              @relation("ApprovalDecider", fields: [decidedById], references: [id], onDelete: Restrict)
+  status         String             @default("PENDING")
+  comment        String?
+  requestedAt    DateTime           @default(now())
+  decidedAt      DateTime?
+
+  @@index([organizationId, status])
+}
+
+model Settlement {
+  id             String             @id @default(cuid())
+  organizationId String
+  organization   Organization       @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  caseId         String             @unique
+  case           ReconciliationCase @relation(fields: [caseId], references: [id], onDelete: Restrict)
+  paymentId      String
+  payment        Payment            @relation(fields: [paymentId], references: [id], onDelete: Restrict)
+  status         String             @default("COMPLETED")
+  reference      String             @unique
+  executedAt     DateTime           @default(now())
+  items          SettlementItem[]
+
+  @@index([organizationId, executedAt])
+}
+
+model SettlementItem {
+  id           String     @id @default(cuid())
+  settlementId String
+  settlement   Settlement @relation(fields: [settlementId], references: [id], onDelete: Cascade)
+  invoiceId    String
+  invoice      Invoice    @relation(fields: [invoiceId], references: [id], onDelete: Restrict)
+  amount       Decimal    @db.Decimal(14, 2)
+
+  @@unique([settlementId, invoiceId])
+}
+
+model Conversation {
+  id             String       @id @default(cuid())
+  organizationId String
+  organization   Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  userId         String
+  user           User         @relation(fields: [userId], references: [id], onDelete: Cascade)
+  agentCode      String
+  title          String
+  createdAt      DateTime     @default(now())
+  updatedAt      DateTime     @updatedAt
+  messages       Message[]
+
+  @@index([organizationId, userId, agentCode])
+}
+
+model Message {
+  id             String       @id @default(cuid())
+  conversationId String
+  conversation   Conversation @relation(fields: [conversationId], references: [id], onDelete: Cascade)
+  role           String
+  content        String
+  toolCalls      Json?
+  provider       String?
+  model          String?
+  mode           String?
+  analysisMode   String?
+  groundingLevel String?
+  confidence     Float?
+  inputTokens    Int?
+  outputTokens   Int?
+  totalTokens    Int?
+  latencyMs      Int?
+  createdAt      DateTime     @default(now())
+
+  @@index([conversationId, createdAt])
+  @@index([provider, createdAt])
+}
+
+model AuditEvent {
+  id             String       @id @default(cuid())
+  organizationId String
+  organization   Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  userId         String?
+  user           User?        @relation(fields: [userId], references: [id], onDelete: SetNull)
+  action         String
+  entityType     String
+  entityId       String?
+  detail         Json?
+  ipAddress      String?
+  createdAt      DateTime     @default(now())
+
+  @@index([organizationId, createdAt])
+  @@index([organizationId, entityType, entityId])
+}

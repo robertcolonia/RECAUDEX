@@ -1,0 +1,80 @@
+services:
+  - type: web
+    name: recaudex-api
+    runtime: node
+    plan: free
+    rootDir: backend
+    buildCommand: npm install && npm run build
+    preDeployCommand: npm run prisma:deploy
+    initialDeployHook: npm run db:seed
+    startCommand: npm start
+    healthCheckPath: /api/health
+    autoDeployTrigger: commit
+    envVars:
+      - key: NODE_ENV
+        value: production
+      - key: HOST
+        value: 0.0.0.0
+      - key: DATABASE_URL
+        fromDatabase:
+          name: recaudex-postgres
+          property: connectionString
+      - key: JWT_SECRET
+        generateValue: true
+      - key: FIELD_ENCRYPTION_KEY
+        generateValue: true
+      - key: GEMINI_API_KEY
+        sync: false
+      - key: GEMINI_MODEL
+        value: gemini-3.7-flash
+      - key: GEMINI_FALLBACK_MODEL
+        value: gemini-3.5-flash-lite
+      - key: GEMINI_PRO_MODEL
+        value: gemini-3.1-pro-preview
+      - key: AI_MAX_OUTPUT_TOKENS
+        value: 900
+      - key: AI_THINKING_BUDGET
+        value: 256
+      - key: AI_DEEP_MAX_OUTPUT_TOKENS
+        value: 1800
+      - key: AI_DEEP_THINKING_BUDGET
+        value: 2048
+      - key: AI_DEEP_DAILY_TOKEN_BUDGET
+        value: 50000
+      - key: AI_HISTORY_MESSAGES
+        value: 10
+      - key: AI_MAX_TOOL_TURNS
+        value: 4
+      - key: AI_DAILY_TOKEN_BUDGET
+        value: 250000
+      - key: AI_REQUEST_TIMEOUT_MS
+        value: 30000
+      - key: SEED_DEFAULT_PASSWORD
+        sync: false
+      - key: CORS_ORIGINS
+        sync: false
+
+  - type: web
+    name: recaudex-web
+    runtime: static
+    rootDir: frontend
+    buildCommand: npm install && npm run build
+    staticPublishPath: ./dist
+    autoDeployTrigger: commit
+    envVars:
+      - key: VITE_API_HOST
+        fromService:
+          type: web
+          name: recaudex-api
+          property: host
+    routes:
+      - type: rewrite
+        source: /*
+        destination: /index.html
+
+databases:
+  - name: recaudex-postgres
+    plan: free
+    databaseName: recaudex
+    user: recaudex_app
+    postgresMajorVersion: "18"
