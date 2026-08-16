@@ -2,11 +2,13 @@ import { useQuery } from "@tanstack/react-query";
 import { ArrowRight, Bot, CheckCircle2, CircleDollarSign, FileClock, Landmark, PlayCircle, RefreshCw, Users } from "lucide-react";
 import { Link } from "react-router-dom";
 import { api } from "../api/client";
+import { ControlTowerCharts, type ControlTowerAnalytics } from "../components/ControlTowerCharts";
 import { useAuth } from "../context/AuthContext";
 import { agents, dateTime, money } from "../data";
 
 type Dashboard = {
   metrics: { customers: number; invoices: number; openInvoices: number; openAmount: number; payments: number; collectedAmount: number; unmatchedPayments: number; pendingApprovals: number; reconciliationRate: number };
+  analytics: ControlTowerAnalytics;
   recentActivity: Array<{ id: string; action: string; entityType: string; createdAt: string; user: { fullName: string } | null }>;
 };
 
@@ -15,7 +17,7 @@ export function DashboardPage() {
   const query = useQuery({ queryKey: ["dashboard"], queryFn: () => api<Dashboard>("/api/dashboard") });
   if (query.isLoading) return <PageLoading />;
   if (query.isError || !query.data) return <PageError retry={() => query.refetch()} />;
-  const { metrics, recentActivity } = query.data;
+  const { metrics, analytics, recentActivity } = query.data;
 
   return <>
     <div className="page-heading heading-row"><div><span className="overline dark">VISIÓN EJECUTIVA</span><h1>Torre de control</h1><p>Estado consolidado del ciclo de ingresos de {user?.organizationName || "la organización"}.</p></div><div className="heading-actions"><Link className="button primary" to="/demo"><PlayCircle size={16} /> Iniciar demo MVP</Link><button className="button secondary" onClick={() => query.refetch()}><RefreshCw size={16} /> Actualizar</button></div></div>
@@ -25,6 +27,7 @@ export function DashboardPage() {
       <Metric icon={<FileClock />} label="Pagos por conciliar" value={metrics.unmatchedPayments.toLocaleString("es-PE")} note="Requieren identificación o validación" tone="amber" />
       <Metric icon={<CheckCircle2 />} label="Tasa aplicada" value={`${metrics.reconciliationRate.toFixed(1)}%`} note={`${metrics.pendingApprovals} aprobaciones pendientes`} tone="violet" />
     </section>
+    <ControlTowerCharts analytics={analytics} />
     <section className="dashboard-grid">
       <div className="panel agents-panel">
         <div className="panel-heading"><div><h2>Red de agentes</h2><p>Selecciona un dominio para consultar su información.</p></div><Bot size={20} /></div>
