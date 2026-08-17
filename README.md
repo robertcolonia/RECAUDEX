@@ -67,45 +67,12 @@ Para controlar consumo se incluyen:
 - Gemini 3.7 Flash como modelo predeterminado, validado con la clave configurada.
 - Gemini 3.1 Pro Preview solo bajo demanda en A0 y A4, con presupuesto diario independiente.
 
-Dify no es necesario para el MVP: agregaría otro servicio y credenciales, pero seguiría consumiendo tokens del modelo subyacente. La integración directa mantiene las políticas, funciones y aislamiento multiempresa dentro del backend de RECAUDEX.
 
 Consulta [AI_AGENTS.md](./AI_AGENTS.md) para ver la matriz completa y el guion de prueba.
 
 La ruta `/demo` ejecuta el recorrido completo del pitch: A0 prioriza, se selecciona un pago, A3 genera candidatos, el Policy Engine registra seis controles, un responsable aprueba, A5 aplica en el ledger, A4 recalcula indicadores y Auditoría muestra la evidencia.
 
-## Publicar el código en GitHub
-
-Desde la carpeta raíz:
-
-```powershell
-git init
-git add .
-git commit -m "feat: plataforma RECAUDEX full stack"
-git branch -M main
-git remote add origin https://github.com/TU-USUARIO/recaudex-fullstack.git
-git push -u origin main
-```
-
-Antes de `git push`, crea en GitHub un repositorio vacío llamado `recaudex-fullstack`. No subas ningún archivo `.env`; ya está excluido por `.gitignore`.
-
-## Desplegar frontend, backend y base de datos en Render
-
-Consulta también la guía paso a paso [DEPLOYMENT.md](./DEPLOYMENT.md).
-
-1. Conecta tu cuenta de GitHub con Render.
-2. En Render, elige **New → Blueprint** y selecciona el repositorio.
-3. Render detectará `render.yaml` y propondrá tres recursos: `recaudex-web`, `recaudex-api` y `recaudex-postgres`.
-4. Completa los secretos solicitados:
-   - `GEMINI_API_KEY`: clave de Google AI Studio.
-   - `SEED_DEFAULT_PASSWORD`: clave inicial robusta para los seis usuarios.
-   - `CORS_ORIGINS`: URL final del frontend, por ejemplo `https://recaudex-web.onrender.com`.
-5. Aprueba el Blueprint. La API ejecutará la migración antes de iniciar y cargará los seis datasets una sola vez tras el primer despliegue.
-6. Comprueba `https://TU-API.onrender.com/api/health` y luego abre la URL del frontend.
-
-`VITE_API_HOST` se enlaza automáticamente con el hostname del backend. Las rutas de React se reescriben a `index.html`, por lo que una recarga en `/agentes/A3` no produce 404.
-
-Render vuelve a compilar los servicios con cada `push` a `main`. En el plan gratuito, la API puede tardar en responder después de un periodo sin tráfico.
-
+`
 ## Variables de entorno
 
 | Variable | Ubicación | Uso |
@@ -147,12 +114,5 @@ Render vuelve a compilar los servicios con cada `push` a `main`. En el plan grat
 - Herramientas diferentes por agente, memoria acotada y trazabilidad de consumo por respuesta.
 - Rate limiting, Helmet, CORS y validación Zod.
 
-## Verificación
 
-```powershell
-npm run test
-npm run eval:agents
-npm run build
-```
 
-GitHub Actions ejecuta ambas comprobaciones en cada cambio enviado a `main` y en cada pull request.
