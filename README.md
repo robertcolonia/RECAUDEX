@@ -2,7 +2,6 @@
 
 Aplicación web independiente para aseguramiento y conciliación del ciclo de ingresos B2B.
 
-> Docker se utiliza únicamente para levantar PostgreSQL durante el desarrollo local. En producción no necesitas mantener Docker abierto: Render ejecuta el backend y proporciona PostgreSQL como servicios administrados.
 
 ## Arquitectura
 
