@@ -1,4 +1,4 @@
-# RECAUDEX Full Stack
+# RECAUDEX 
 
 Aplicación web independiente para aseguramiento y conciliación del ciclo de ingresos B2B. No utiliza Lovable ni Supabase en ejecución.
 
