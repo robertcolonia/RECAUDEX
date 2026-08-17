@@ -10,6 +10,8 @@ jobs:
     runs-on: ubuntu-latest
     env:
       DATABASE_URL: postgresql://postgres:postgres@localhost:5432/recaudex
+      JWT_SECRET: recaudex-ci-jwt-secret-only-for-automated-tests
+      FIELD_ENCRYPTION_KEY: recaudex-ci-field-key-only-for-automated-tests
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
@@ -17,6 +19,6 @@ jobs:
           node-version: 22
           cache: npm
       - run: npm ci
+      - run: npm run db:generate
       - run: npm run test
       - run: npm run build
-
