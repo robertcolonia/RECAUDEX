@@ -67,6 +67,8 @@ Si AI Studio muestra **Nivel gratuito**, pulsa **Configurar la facturación** en
 5. React se compila con el hostname real de esa API.
 6. El frontend queda disponible en una URL similar a `https://recaudex-web.onrender.com`.
 
+La migración también crea el historial de importaciones. Después del despliegue, los usuarios autorizados pueden cargar nuevos CSV/XLSX desde `/importaciones`; los archivos se validan en memoria y solo los registros confirmados se incorporan a PostgreSQL.
+
 ## 5. Verificación después de publicar
 
 Abre primero:
@@ -98,6 +100,7 @@ Comprueba en este orden:
 5. Solicitud y decisión en Aprobaciones.
 6. Registro correspondiente en Auditoría.
 7. Registro de una organización desde **Crear cuenta**, edición de perfil y altas de usuario, cliente y cuenta bancaria.
+8. Importación de un CSV o XLSX: vista previa, validación, confirmación e historial en Auditoría.
 
 ## 6. Actualizaciones posteriores
 

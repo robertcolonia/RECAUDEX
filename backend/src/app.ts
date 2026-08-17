@@ -13,6 +13,7 @@ import dashboardRoutes from "./routes/dashboard.routes.js";
 import reconciliationRoutes from "./routes/reconciliation.routes.js";
 import settlementRoutes from "./routes/settlement.routes.js";
 import userRoutes from "./routes/user.routes.js";
+import dataImportRoutes from "./routes/data-import.routes.js";
 
 export const app = express();
 
@@ -39,13 +40,15 @@ app.use("/api/reconciliations", reconciliationRoutes);
 app.use("/api/approvals", approvalRoutes);
 app.use("/api/settlements", settlementRoutes);
 app.use("/api/audit", auditRoutes);
+app.use("/api/imports", dataImportRoutes);
 
 app.use((_req, res) => res.status(404).json({ message: "Recurso no encontrado." }));
 app.use((error: Error & { status?: number; type?: string }, _req: Request, res: Response, _next: NextFunction) => {
   console.error(error);
   const corsError = error.message.includes("Origen no autorizado");
   const tooLarge = error.status === 413 || error.type === "entity.too.large";
-  const status = corsError ? 403 : tooLarge ? 413 : 500;
-  const message = corsError ? error.message : tooLarge ? "La foto supera el límite de 2 MB." : "No fue posible completar la operación.";
+  const clientStatus = error.status && error.status >= 400 && error.status < 500 ? error.status : null;
+  const status = corsError ? 403 : tooLarge ? 413 : clientStatus || 500;
+  const message = corsError ? error.message : tooLarge ? "El archivo supera el límite permitido." : clientStatus ? error.message : "No fue posible completar la operación.";
   res.status(status).json({ message });
 });

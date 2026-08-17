@@ -15,6 +15,7 @@ import { BankAccountsPage } from "./pages/BankAccountsPage";
 import { ReconciliationPage } from "./pages/ReconciliationPage";
 import { PitchDemoPage } from "./pages/PitchDemoPage";
 import { LandingPage } from "./pages/LandingPage";
+import { DataImportsPage } from "./pages/DataImportsPage";
 
 const shell = (page: React.ReactNode) => <ErrorBoundary><AppShell>{page}</AppShell></ErrorBoundary>;
 
@@ -34,6 +35,7 @@ export default function App() {
       <Route path="usuarios" element={shell(<UsersPage />)} />
       <Route path="clientes" element={shell(<CustomersPage />)} />
       <Route path="bancos" element={shell(<BankAccountsPage />)} />
+      <Route path="importaciones" element={shell(<DataImportsPage />)} />
     </Route>
     <Route path="*" element={<Navigate to="/" replace />} />
   </Routes>;

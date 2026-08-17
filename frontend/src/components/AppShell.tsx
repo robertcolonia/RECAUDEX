@@ -1,5 +1,5 @@
 import { useState, type ReactNode } from "react";
-import { Activity, Bot, Building2, CheckCircle2, FileSearch, Landmark, LayoutDashboard, LogOut, Menu, PlayCircle, ShieldCheck, UserCircle, Users, X } from "lucide-react";
+import { Activity, Bot, Building2, CheckCircle2, FileSearch, FileSpreadsheet, Landmark, LayoutDashboard, LogOut, Menu, PlayCircle, ShieldCheck, UserCircle, Users, X } from "lucide-react";
 import { NavLink } from "react-router-dom";
 import { useAuth } from "../context/AuthContext";
 import { agents, roleLabels } from "../data";
@@ -32,6 +32,7 @@ export function AppShell({ children }: { children: ReactNode }) {
         <span className="nav-eyebrow nav-agents"><Bot size={14} /> AGENTES DE IA</span>
         {agents.map((agent) => <NavLink key={agent.code} to={`/agentes/${agent.code}`} className={({ isActive }) => `nav-item agent-nav ${isActive ? "active" : ""}`}><span className="agent-dot" style={{ background: agent.color }} /> <span><b>{agent.code}</b> {agent.name}</span></NavLink>)}
         <span className="nav-eyebrow nav-agents">GESTIÓN</span>
+        {user && ["ADMIN", "DIRECTION", "BILLING", "COLLECTIONS", "RECONCILIATION", "FINANCE"].includes(user.role) && <NavLink to="/importaciones" className={({ isActive }) => `nav-item ${isActive ? "active" : ""}`}><FileSpreadsheet size={18} /><span>Importar datos</span></NavLink>}
         <NavLink to="/clientes" className={({ isActive }) => `nav-item ${isActive ? "active" : ""}`}><Building2 size={18} /><span>Clientes B2B</span></NavLink>
         {user && ["ADMIN", "DIRECTION", "FINANCE", "RECONCILIATION"].includes(user.role) && <NavLink to="/bancos" className={({ isActive }) => `nav-item ${isActive ? "active" : ""}`}><Landmark size={18} /><span>Cuentas bancarias</span></NavLink>}
         {user && ["ADMIN", "DIRECTION"].includes(user.role) && <NavLink to="/usuarios" className={({ isActive }) => `nav-item ${isActive ? "active" : ""}`}><Users size={18} /><span>Usuarios</span></NavLink>}

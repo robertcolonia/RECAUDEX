@@ -16,7 +16,7 @@ Express + TypeScript (backend)
         └── políticas, aprobaciones y auditoría
 ```
 
-- `frontend/`: página institucional pública, registro, acceso, perfil, usuarios, clientes, bancos, torre de control, chats A0–A5, conciliación, aprobaciones y auditoría.
+- `frontend/`: página institucional pública, registro, acceso, perfil, usuarios, clientes, bancos, importación CSV/XLSX, torre de control, chats A0–A5, conciliación, aprobaciones y auditoría.
 - `backend/`: API REST multiempresa, autenticación JWT, control por roles, cifrado de datos bancarios, agentes y operaciones financieras.
 - `backend/data/raw/`: seis archivos sintéticos SON-IA, importados por la semilla.
 - `render.yaml`: frontend, API y PostgreSQL desplegables como un solo Blueprint.
@@ -46,6 +46,21 @@ Acceso local inicial:
 También se crean cuentas para `facturacion`, `cobranzas`, `recaudo`, `finanzas` y `bi` en el dominio `recaudex.app`. En un entorno real, cambia `SEED_DEFAULT_PASSWORD` y reemplaza estas cuentas por las corporativas.
 
 La opción **Crear cuenta** de la pantalla de acceso registra una organización independiente y a su primer administrador. Dentro del sistema, ese administrador puede crear usuarios por área, editar su perfil, subir o eliminar su foto, cambiar correo y contraseña, mantener clientes B2B y registrar cuentas bancarias. Las fotos admiten JPG, PNG o WebP de hasta 2 MB y se guardan en PostgreSQL, no en el disco temporal del servidor.
+
+## Importación de CSV y XLSX
+
+La ruta `/importaciones` incorpora datos operativos sin conectarse directamente a los sistemas de origen. Admite los seis dominios entregados por SON-IA: clientes, planta fija, planta móvil, pagos, facturas y notas de crédito.
+
+- formatos permitidos: `.csv` y `.xlsx` —primera hoja, sin macros—;
+- límite: 12 MB y 20,000 filas por ejecución;
+- CSV con delimitador `|`, `;`, `,` o tabulación;
+- vista previa con columnas mínimas, registros válidos, advertencias y rechazos;
+- validación de RUC, fechas, importes, documentos, duplicados y dependencias con la maestra de clientes;
+- confirmación explícita antes de escribir en PostgreSQL;
+- omisión de duplicados existentes, huella del archivo e historial por organización;
+- evento `DATA_FILE_IMPORTED` en Auditoría.
+
+Los registros rechazados nunca se insertan. Los pagos sin factura o pagador reconocido pueden conservarse con advertencia porque representan precisamente los casos que A3 debe investigar. El formato heredado `.xls` no está permitido.
 
 ## Gemini
 

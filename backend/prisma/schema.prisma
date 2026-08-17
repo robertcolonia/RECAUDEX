@@ -28,6 +28,7 @@ model Organization {
   settlements         Settlement[]
   conversations       Conversation[]
   auditEvents         AuditEvent[]
+  dataImports         DataImport[]
 }
 
 model User {
@@ -51,6 +52,7 @@ model User {
   requested      Approval[]     @relation("ApprovalRequester")
   decided        Approval[]     @relation("ApprovalDecider")
   auditEvents    AuditEvent[]
+  dataImports    DataImport[]
 
   @@index([organizationId])
 }
@@ -324,4 +326,26 @@ model AuditEvent {
 
   @@index([organizationId, createdAt])
   @@index([organizationId, entityType, entityId])
+}
+
+model DataImport {
+  id             String       @id @default(cuid())
+  organizationId String
+  organization   Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  userId         String
+  user           User         @relation(fields: [userId], references: [id], onDelete: Restrict)
+  datasetType    String
+  fileName       String
+  fileType       String
+  checksum       String
+  totalRows      Int
+  validRows      Int
+  importedRows   Int
+  rejectedRows   Int
+  status         String       @default("COMPLETED")
+  summary        Json?
+  createdAt      DateTime     @default(now())
+
+  @@unique([organizationId, datasetType, checksum])
+  @@index([organizationId, createdAt])
 }

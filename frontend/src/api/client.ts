@@ -32,6 +32,19 @@ export async function uploadFile<T>(path: string, file: File): Promise<T> {
   return body as T;
 }
 
+export async function uploadDataFile<T>(path: string, file: File, datasetType: string, method: "PUT" | "POST" = "PUT"): Promise<T> {
+  const headers = new Headers({
+    "Content-Type": file.type || "application/octet-stream",
+    "X-File-Name": encodeURIComponent(file.name)
+  });
+  const token = sessionStorage.getItem("recaudex_token");
+  if (token) headers.set("Authorization", `Bearer ${token}`);
+  const response = await fetch(`${API_URL}${path}?datasetType=${encodeURIComponent(datasetType)}`, { method, headers, body: file });
+  const body = await response.json().catch(() => ({}));
+  if (!response.ok) throw new ApiError(body.message || "No fue posible procesar el archivo.", response.status);
+  return body as T;
+}
+
 export async function authenticatedBlob(path: string): Promise<Blob | null> {
   const headers = new Headers();
   const token = sessionStorage.getItem("recaudex_token");

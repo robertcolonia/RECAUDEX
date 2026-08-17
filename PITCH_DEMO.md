@@ -9,6 +9,8 @@ Duración recomendada: 3 a 4 minutos.
 3. Verifica la barra superior: API y PostgreSQL deben aparecer en línea.
 4. Si Gemini muestra **Clave pendiente**, el flujo financiero seguirá funcionando, pero el chat usará el motor analítico local. Para presentar IA generativa, configura `GEMINI_API_KEY` antes del pitch.
 
+Como evidencia adicional de viabilidad, abre brevemente **Importar datos**, selecciona **Pagos y recaudo** y muestra la vista previa de un CSV/XLSX. Explica que RECAUDEX valida el archivo antes de incorporarlo y que esta capa funciona como puente con reportes bancarios, SQL Server, Teradata y facturadores mientras se construyen integraciones API. No dediques más de 20 segundos a esta pantalla.
+
 ## Recorrido que debe mostrarse
 
 1. **A0 / Control Tower:** presenta cartera abierta, pagos pendientes y tasa aplicada.
