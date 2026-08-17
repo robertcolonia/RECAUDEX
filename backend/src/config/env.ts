@@ -9,7 +9,7 @@ const schema = z.object({
   JWT_SECRET: z.string().min(32),
   FIELD_ENCRYPTION_KEY: z.string().min(32).default("recaudex-local-field-key-change-me"),
   GEMINI_API_KEY: z.string().optional(),
-  GEMINI_MODEL: z.string().default("gemini-3.7-flash"),
+  GEMINI_MODEL: z.string().default("gemini-3.6-flash"),
   GEMINI_FALLBACK_MODEL: z.string().default("gemini-3.5-flash-lite"),
   GEMINI_PRO_MODEL: z.string().default("gemini-3.1-pro-preview"),
   AI_MAX_OUTPUT_TOKENS: z.coerce.number().int().min(256).max(4096).default(900),

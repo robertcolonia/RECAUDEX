@@ -75,7 +75,7 @@ Los registros rechazados nunca se insertan. Los pagos sin factura o pagador reco
 
 1. Crea una clave en [Google AI Studio](https://ai.google.dev/aistudio).
 2. Guarda la clave únicamente como `GEMINI_API_KEY` en `backend/.env` o en las variables secretas de Render.
-3. El modo rápido usa `gemini-3.7-flash`; si su cuota se agota, cambia automáticamente a `gemini-3.5-flash-lite`. A0 y A4 ofrecen además **Análisis profundo** con `gemini-3.1-pro-preview`.
+3. El modo rápido usa `gemini-3.6-flash`; si su cuota se agota, cambia automáticamente a `gemini-3.5-flash-lite`. A0 y A4 ofrecen además **Análisis profundo** con `gemini-3.1-pro-preview`.
 
 Los seis agentes comparten el proveedor, pero no el comportamiento: cada uno tiene instrucciones, capacidades y herramientas de PostgreSQL diferentes. A0 coordina; A1 inspecciona facturación; A2 prioriza cobranza; A3 consulta pagos, conciliaciones y Payment Twin; A4 interpreta matching y riesgo; A5 verifica aprobaciones y ledger.
 

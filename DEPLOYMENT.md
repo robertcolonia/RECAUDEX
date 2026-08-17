@@ -12,6 +12,17 @@
 
 GitHub por sí solo no puede ejecutar Express ni PostgreSQL. GitHub Pages solamente aloja archivos estáticos; por eso la opción recomendada es guardar el código en GitHub y dejar que Render publique los tres componentes definidos en `render.yaml`.
 
+## Arranque local completo
+
+1. Abre Docker Desktop y espera a que indique que el motor está activo.
+2. Desde la raíz `RECAUDEX_FULLSTACK`, ejecuta:
+
+```powershell
+npm run dev:local
+```
+
+Ese comando levanta PostgreSQL, aplica las migraciones, conserva o carga los datos iniciales y arranca API + React. Las direcciones esperadas son `http://localhost:4000/api/health` y `http://localhost:5173`. Si el puerto 5173 ya está ocupado, Vite mostrará otro puerto; cierra procesos antiguos para mantener una sola instancia.
+
 ## 1. Subir el proyecto a GitHub
 
 1. En GitHub crea un repositorio vacío, por ejemplo `recaudex-fullstack`.
@@ -61,13 +72,15 @@ Si AI Studio muestra **Nivel gratuito**, pulsa **Configurar la facturación** en
 ## 4. Qué sucede durante el primer despliegue
 
 1. Render instala y compila el backend.
-2. Prisma aplica todas las migraciones, incluida la ampliación de perfiles, empresas y cuentas bancarias.
+2. Al iniciar la API, Prisma aplica todas las migraciones, incluida la ampliación de perfiles, empresas y cuentas bancarias. Esto está incluido en `startCommand` porque el comando previo al despliegue no está disponible para servicios web gratuitos.
 3. Se importan los seis archivos SON-IA una sola vez.
 4. La API comienza a responder en una URL similar a `https://recaudex-api.onrender.com`.
 5. React se compila con el hostname real de esa API.
 6. El frontend queda disponible en una URL similar a `https://recaudex-web.onrender.com`.
 
 La migración también crea el historial de importaciones. Después del despliegue, los usuarios autorizados pueden cargar nuevos CSV/XLSX desde `/importaciones`; los archivos se validan en memoria y solo los registros confirmados se incorporan a PostgreSQL.
+
+> Para una demostración temporal, el plan gratuito es suficiente. Render suspende los servicios web gratuitos cuando no reciben tráfico y su PostgreSQL gratuito vence a los 30 días; para conservar el MVP de forma permanente debes migrar la base a un plan de pago o a otro PostgreSQL administrado y actualizar `DATABASE_URL`.
 
 ## 5. Verificación después de publicar
 

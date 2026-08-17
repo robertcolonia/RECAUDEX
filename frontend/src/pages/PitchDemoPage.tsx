@@ -1,4 +1,5 @@
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
+import { Link } from "react-router-dom";
 import { Activity, Bot, Check, CheckCircle2, ChevronRight, CircleDollarSign, Database, FileCheck2, Landmark, Play, RefreshCw, ShieldCheck, Sparkles } from "lucide-react";
 import { api } from "../api/client";
 import { money, dateTime } from "../data";
@@ -26,10 +27,11 @@ export function PitchDemoPage() {
   const [events, setEvents] = useState<Event[]>([]);
   const [busy, setBusy] = useState("");
   const [error, setError] = useState("");
+  const resultRef = useRef<HTMLElement | null>(null);
   const selected = useMemo(() => payments.find((payment) => payment.id === selectedId), [payments, selectedId]);
   const stage = settlement ? 9 : approval?.status === "APPROVED" ? 7 : approval ? 6 : matchCase ? 5 : selected ? 3 : 2;
 
-  async function load() {
+  async function load(reset = false) {
     setError("");
     try {
       const [status, dashboard, queue] = await Promise.all([
@@ -37,22 +39,27 @@ export function PitchDemoPage() {
         api<{ metrics: Metrics }>("/api/dashboard"),
         api<{ payments: Payment[] }>("/api/reconciliations/payments")
       ]);
-      setSystem(status); setBefore(dashboard.metrics); setPayments(queue.payments); if (!selectedId && queue.payments[0]) setSelectedId(queue.payments[0].id);
+      setSystem(status); setBefore(dashboard.metrics); setPayments(queue.payments);
+      if (reset) {
+        setSelectedId(queue.payments[0]?.id || ""); setMatchCase(null); setApproval(null); setSettlement(null); setAfter(null); setEvents([]);
+      } else if (!selectedId && queue.payments[0]) setSelectedId(queue.payments[0].id);
     } catch (cause) { setError(cause instanceof Error ? cause.message : "No se pudo preparar la demostración."); }
   }
   useEffect(() => { void load(); }, []);
+  useEffect(() => { if (settlement) resultRef.current?.scrollIntoView({ behavior: "smooth", block: "start" }); }, [settlement]);
 
   async function act(name: string, callback: () => Promise<void>) { setBusy(name); setError(""); try { await callback(); } catch (cause) { setError(cause instanceof Error ? cause.message : "No fue posible completar esta etapa."); } finally { setBusy(""); } }
   function generate() { if (!selected) return; return act("match", async () => { const response = await api<{ case: MatchCase }>(`/api/reconciliations/generate/${selected.id}`, { method: "POST" }); setMatchCase(response.case); }); }
   function requestApproval() { if (!matchCase) return; return act("request", async () => { const response = await api<{ approval: Approval }>(`/api/approvals/request/${matchCase.id}`, { method: "POST" }); setApproval(response.approval); }); }
   function approve() { if (!approval) return; return act("approve", async () => { const response = await api<{ approval: Approval }>(`/api/approvals/${approval.id}/decision`, { method: "POST", body: JSON.stringify({ status: "APPROVED", comment: "Aprobación ejecutada durante la demostración del MVP." }) }); setApproval(response.approval); }); }
   function settle() { if (!matchCase) return; return act("settle", async () => {
-    const response = await api<{ settlement: Settlement; indicators: Metrics }>(`/api/settlements/${matchCase.id}/execute`, { method: "POST", body: "{}" }); setSettlement(response.settlement);
-    const [dashboard, audit] = await Promise.all([api<{ metrics: Metrics }>("/api/dashboard"), api<{ events: Event[] }>("/api/audit")]); setAfter(dashboard.metrics); setEvents(audit.events.slice(0, 8));
+    const response = await api<{ settlement: Settlement; indicators: Metrics }>(`/api/settlements/${matchCase.id}/execute`, { method: "POST", body: "{}" });
+    const [dashboard, audit] = await Promise.all([api<{ metrics: Metrics }>("/api/dashboard"), api<{ events: Event[] }>("/api/audit")]);
+    setAfter(dashboard.metrics); setEvents(audit.events.slice(0, 8)); setSettlement(response.settlement);
   }); }
 
   return <div className="demo-page">
-    <header className="page-heading heading-row"><div><span className="overline dark"><Sparkles size={14} /> DEMOSTRACIÓN PARA EL PITCH</span><h1>Recorrido integral del MVP</h1><p>Una operación real sobre PostgreSQL, desde el pago sin identificar hasta el ledger y la auditoría.</p></div><button className="button secondary" onClick={() => void load()}><RefreshCw size={16} /> Reiniciar selección</button></header>
+    <header className="page-heading heading-row"><div><span className="overline dark"><Sparkles size={14} /> DEMOSTRACIÓN PARA EL PITCH</span><h1>Recorrido integral del MVP</h1><p>Una operación real sobre PostgreSQL, desde el pago sin identificar hasta el ledger y la auditoría.</p></div><button className="button secondary" onClick={() => void load(true)}><RefreshCw size={16} /> Reiniciar selección</button></header>
     <div className="demo-system-bar"><StatusDot label="API" value={system?.api} /><StatusDot label="PostgreSQL" value={system?.database} /><StatusDot label="Gemini" value={system?.gemini === "CONFIGURED" ? system.model : "Clave pendiente"} warning={system?.gemini !== "CONFIGURED"} /><span>Sin integración bancaria real · datos sintéticos SON-IA</span></div>
     {error && <div className="notice error">{error}</div>}
     <div className="demo-layout">
@@ -66,7 +73,7 @@ export function PitchDemoPage() {
 
         {approval && <section className="demo-stage panel approval-stage"><div className="demo-stage-title"><span><ShieldCheck /></span><div><small>PASO 6 · CONTROL HUMANO</small><h2>{approval.status === "APPROVED" ? "Caso aprobado" : "Decisión financiera pendiente"}</h2><p>La recomendación no puede aplicarse hasta que un responsable autorizado la apruebe.</p></div><b>{approval.status}</b></div>{approval.status === "PENDING" && <div className="stage-action"><button className="button primary" onClick={() => void approve()} disabled={busy === "approve"}><Check size={16} />{busy === "approve" ? "Aprobando…" : "Aprobar como responsable"}</button></div>}{approval.status === "APPROVED" && !settlement && <div className="stage-action"><button className="button primary" onClick={() => void settle()} disabled={busy === "settle"}><CircleDollarSign size={16} />{busy === "settle" ? "Aplicando en ledger…" : "A5: aplicar pago en ledger"}</button></div>}</section>}
 
-        {settlement && <section className="demo-stage panel result-stage"><div className="result-mark"><CheckCircle2 /></div><div><small>PASOS 7–9 · A5 + A4 + AUDITORÍA</small><h2>Pago aplicado y métricas recalculadas</h2><p>Referencia de ledger <strong>{settlement.reference}</strong>. La factura, el pago, el caso y los indicadores cambiaron dentro de una transacción controlada.</p></div>{before && after && <div className="comparison-grid"><Comparison label="Pagos pendientes" before={String(before.unmatchedPayments)} after={String(after.unmatchedPayments)} /><Comparison label="Cartera abierta" before={money(before.openAmount)} after={money(after.openAmount)} /><Comparison label="Tasa aplicada" before={`${before.reconciliationRate.toFixed(1)}%`} after={`${after.reconciliationRate.toFixed(1)}%`} /></div>}<div className="demo-audit"><h3><Database size={16} /> Evidencia registrada</h3>{events.map((event) => <div key={event.id}><span className="activity-dot" /><strong>{event.action.replaceAll("_", " ")}</strong><small>{event.user?.fullName || "Sistema"} · {dateTime(event.createdAt)}</small></div>)}</div></section>}
+        {settlement && <section className="demo-stage panel result-stage" ref={resultRef}><div className="result-mark"><CheckCircle2 /></div><div><small>PASOS 7–9 · A5 + A4 + AUDITORÍA</small><h2>Pago aplicado y métricas recalculadas</h2><p>Referencia de ledger <strong>{settlement.reference}</strong>. La factura, el pago, el caso y los indicadores cambiaron dentro de una transacción controlada.</p></div>{before && after && <div className="comparison-grid"><Comparison label="Pagos pendientes" before={String(before.unmatchedPayments)} after={String(after.unmatchedPayments)} /><Comparison label="Cartera abierta" before={money(before.openAmount)} after={money(after.openAmount)} /><Comparison label="Tasa aplicada" before={`${before.reconciliationRate.toFixed(1)}%`} after={`${after.reconciliationRate.toFixed(1)}%`} /></div>}<div className="demo-audit"><h3><Database size={16} /> Evidencia registrada</h3>{events.map((event) => <div key={event.id}><span className="activity-dot" /><strong>{event.action.replaceAll("_", " ")}</strong><small>{event.user?.fullName || "Sistema"} · {dateTime(event.createdAt)}</small></div>)}</div><div className="result-actions"><Link className="button secondary" to="/dashboard">Ver Torre de control</Link><Link className="button secondary" to="/conciliacion">Ver caso conciliado</Link><Link className="button primary" to="/auditoria">Abrir Auditoría</Link></div></section>}
       </main>
     </div>
   </div>;
